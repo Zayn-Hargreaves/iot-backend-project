@@ -24,7 +24,10 @@ class waterUsage{
             }
             previousTime = new Date(dataPoint.createdAt).getTime();
         });
-        return totalWaterUsage; // Trả về tổng lượng nước đã sử dụng (lít)
+        const pricePerLiter = 5000; 
+        const totalAmount = totalWaterUsage * pricePerLiter /1000;
+
+        return { totalWaterUsage, totalAmount };
     }
 }
 
