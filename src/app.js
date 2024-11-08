@@ -4,7 +4,9 @@ const helmet = require("helmet")
 const compression = require("compression");
 const client = require("./config/config.hivemq");
 const admin = require("./config/config.firebase");
+const SocketIO = require("socket.io")
 const { hivemqMiddleware } = require("./middleware/hivemq.middleware");
+const http = require("http")
 require("dotenv").config()
 
 const app = express();
@@ -16,6 +18,8 @@ app.use(express.json());
 app.use(express.urlencoded({
     extended:true
 }))
+const server = http.createServer(app)
+const io = SocketIO(server)
 // init db
 require("./dbs/init.database")
 app.use(hivemqMiddleware)
@@ -39,4 +43,4 @@ client;
 admin;
 
 
-module.exports = app;
+module.exports = {app,server, io};

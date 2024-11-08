@@ -4,16 +4,16 @@ const SensorData = require("../models/sensorData");
 const alertService = require("../services/alert.service");
 const Device = require("../models/device.model");
 const systemService = require("./system.service");
-
+const {io} = require("../app")
 class statsService {
     // Subscribe tất cả các device theo deviceCode
     static subscribeAllDevices = async () => {
         const devices = await Device.find().lean();
-        devices.forEach(device => {
-            const topic = `/sensor/${device.deviceCode}/data`;  // Tạo topic theo deviceCode
+        for (const device of devices) {
+            const topic = `/sensor/${device.deviceCode}/data`;
             this.subscribeTopic(topic);
             this.listenForMessage(topic);
-        });
+        }
     };
 
     static subscribeTopic = (topic) => {
@@ -54,7 +54,12 @@ class statsService {
                     value,
                     unit
                 });
-
+                io.emit('sensorData', {
+                    deviceCode,
+                    value,
+                    unit,
+                    timestamp: new Date()
+                });
                 // Lấy trạng thái relay
                 const relay = await Device.findOne({ deviceCode: "RELAY_5V" }).lean();
                 const relayData = await SensorData.findOne({ device_id: relay._id }).lean();
