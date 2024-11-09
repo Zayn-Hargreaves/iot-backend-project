@@ -4,7 +4,7 @@ const SensorData = require("../models/sensorData");
 const alertService = require("../services/alert.service");
 const Device = require("../models/device.model");
 const systemService = require("./system.service");
-const {io} = require("../app")
+const {server, io} = require("../socket.io")
 class statsService {
     // Subscribe tất cả các device theo deviceCode
     static subscribeAllDevices = async () => {
@@ -37,39 +37,43 @@ class statsService {
     };
 
     // Lắng nghe tin nhắn từ topic của từng cảm biến
-    static listenForMessage = (topic) => {
-        client.on('message', async (receivedTopic, message) => {
-            if (receivedTopic === topic) {
-                const parsedMessage = JSON.parse(message.toString());
-                const { deviceCode, value, unit } = parsedMessage;
-
-                // Lưu dữ liệu cảm biến vào MongoDB
-                const device = await Device.findOne({ deviceCode }).lean();
-                if (!device) {
-                    throw new NotFoundError("Cant find device");
-                }
-
-                const sensorData = await SensorData.create({
-                    device_id: device._id,
-                    value,
-                    unit
-                });
-                io.emit('sensorData', {
-                    deviceCode,
-                    value,
-                    unit,
-                    timestamp: new Date()
-                });
-                // Lấy trạng thái relay
-                const relay = await Device.findOne({ deviceCode: "RELAY_5V" }).lean();
-                const relayData = await SensorData.findOne({ device_id: relay._id }).lean();
-
-                // Kiểm tra ngưỡng của từng cảm biến và tạo cảnh báo nếu cần
-                this.checkThresholds(deviceCode, value, device._id, relayData);
-                
-                console.log(`Data received from ${deviceCode}: ${value}`);
-            }
+    static listenForMessage = () => {
+        io.emit('sensorData', {
+            message:"Hello"
+            // deviceCode,
+            // value,
+            // unit,
+            // timestamp: new Date()
         });
+        console.log("Message emitted to clients.");
+        // console.log("heoo")
+        // client.on('message', async (receivedTopic, message) => {
+        //     if (receivedTopic === topic) {
+        //         const parsedMessage = JSON.parse(message.toString());
+        //         const { deviceCode, value, unit } = parsedMessage;
+
+        //         // Lưu dữ liệu cảm biến vào MongoDB
+        //         const device = await Device.findOne({ deviceCode }).lean();
+        //         if (!device) {
+        //             throw new NotFoundError("Cant find device");
+        //         }
+
+        //         const sensorData = await SensorData.create({
+        //             device_id: device._id,
+        //             value,
+        //             unit
+        //         });
+                
+        //         // Lấy trạng thái relay
+        //         const relay = await Device.findOne({ deviceCode: "RELAY_5V" }).lean();
+        //         const relayData = await SensorData.findOne({ device_id: relay._id }).lean();
+
+        //         // Kiểm tra ngưỡng của từng cảm biến và tạo cảnh báo nếu cần
+        //         this.checkThresholds(deviceCode, value, device._id, relayData);
+                
+        //         console.log(`Data received from ${deviceCode}: ${value}`);
+        //     }
+        // });
     };
 
     static checkThresholds = async (deviceCode, value, deviceId, relayData) => {

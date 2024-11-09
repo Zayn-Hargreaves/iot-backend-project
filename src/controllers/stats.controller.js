@@ -15,5 +15,11 @@ class statsController{
             metadata: await waterUsage.calculateWaterUsage()
         }).send(res)
     }
+    listenMessage = async(req, res, next)=>{
+        new SuccessResponse({
+            message:"listen for message",
+            metadata: await statsService.listenForMessage()
+        })
+    }
 }
 module.exports = new statsController()
