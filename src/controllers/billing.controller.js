@@ -6,7 +6,7 @@ class billingController{
         new SuccessResponse({
             message:"create payment successfully",
             metadata: await paymentService.createPaymentUrl(req, res)
-        }).send(res)
+        })
     }
     vnpayIPN = async(req, res, next)=>{
         new SuccessResponse({

@@ -1,16 +1,14 @@
 const { Types } = require("mongoose");
-const Device = require("../models/device.model");
-
+const SensorData = require("../models/sensorData.model")
 class waterUsage{
     static async calculateWaterUsage() {
         // Tìm tất cả các giá trị lưu lượng nước từ cảm biến YF-S201
-        const device = await Device.findOne({deviceCode:"YF-S201"}).lean()
-        const flowData = await SensorData.find({ device_id: new Types.ObjectId(device._id )}).sort({ createdAt: 1 }).lean();
+        const flowData = await SensorData.find().sort({ createdAt: 1 }).lean();
 
         if (!flowData.length) {
             return 0; 
         }
-
+        console.log(flowData)
         let totalWaterUsage = 0; // Tổng lượng nước sử dụng
         let previousTime = null;
 
@@ -20,12 +18,12 @@ class waterUsage{
                 const timeDifference = (currentTime - previousTime) / 60000; // Chuyển đổi sang phút
 
                 // Số lượng nước sử dụng = Lưu lượng * thời gian chảy (phút)
-                totalWaterUsage += dataPoint.value * timeDifference;
+                totalWaterUsage += dataPoint.flowRate * timeDifference;
             }
             previousTime = new Date(dataPoint.createdAt).getTime();
         });
         const pricePerLiter = 5000; 
-        const totalAmount = totalWaterUsage * pricePerLiter /1000;
+        const totalAmount = totalWaterUsage * pricePerLiter /1000000;
 
         return { totalWaterUsage, totalAmount };
     }

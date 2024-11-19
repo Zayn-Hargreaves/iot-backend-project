@@ -3,21 +3,20 @@ const DOCUMENT_NAME = "SensorData";
 const COLLECTION_NAME = "SensorData";
 
 const sensorDataSchema = new mongoose.Schema({
-    device_id: {
-        type: Schema.Types.ObjectId,
-        required: true,
-        index: true,
-        ref:"Device"
+    temperature:{
+        type:Number,
     },
-    value: {
-        type: Number, 
-        required: true
+    tds:{
+        type:Number,
     },
-    unit:{
-        type:String,
+    flowRate:{
+        type:Number,
+    },
+    relay:{
+        type:Number,
     }
 }, {
-    timestamps: { createdAt: true, updatedAt: false }, // Chỉ tạo trường createdAt, không cần updatedAt
+    timestamps: { createdAt: true, updatedAt: false },
     collection: COLLECTION_NAME
 });
 

@@ -3,11 +3,9 @@ const DOCUMENT_NAME = "Alert";
 const COLLECTION_NAME = "Alerts";
 
 const alertSchema = new mongoose.Schema({
-    device_id: {
-        type: Schema.Types.ObjectId,
-        required: true,
-        index: true,
-        ref:"Device"
+    device: {
+        type:String,
+        require:true
     },
     alert_type: {
         type: String,

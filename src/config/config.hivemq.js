@@ -1,18 +1,39 @@
 const mqtt = require('mqtt');
+const statsService = require('../services/stats.service');
 
-const options = {
-    host: '901fd4961989456385b5b176217f0ce3.s1.eu.hivemq.cloud', // Thay Cluster URL
-    port: 8883, // Port MQTT
-    protocol: 'mqtts', // Sử dụng MQTT qua TLS
-    username: 'hivemq.webclient.1729244738458', // Thay bằng username HiveMQ của bạn
-    password: 'ih1PU90m;5?*aAHk%OTp'  // Thay bằng password HiveMQ của bạn
-};
+// Thông tin MQTT broker
+const brokerUrl = 'mqtt://localhost:2403'; // Thay 'localhost' bằng IP của broker nếu cần
+const topic = 'sensor/data'; // Topic bạn muốn subscribe
 
-const client = mqtt.connect(options);
+// Kết nối tới broker
+const client = mqtt.connect(brokerUrl);
 
-client.on('connect', function () {
-    console.log('Connected to HiveMQ Cloud');
+client.on('connect', () => {
+  console.log('Đã kết nối tới MQTT broker.');
+
+  // Subscribe tới topic
+  client.subscribe(topic, (err) => {
+    if (err) {
+      console.error('Lỗi khi subscribe:', err);
+    } else {
+      console.log(`Đã subscribe tới topic: ${topic}`);
+    }
+  });
 });
 
+// Lắng nghe dữ liệu từ topic
+client.on('message', (topic, message) => {
+  console.log(`Dữ liệu nhận được từ topic "${topic}": ${message.toString()}`);
+  const data = message.toString()
+  if (global._io) {
+    global._io.emit("mqttData", { topic, data });
+    statsService.handleSensorData(data)
+  }
+});
 
+// Xử lý lỗi kết nối
+client.on('error', (err) => {
+  console.error('Lỗi MQTT:', err);
+});
+// end test
 module.exports = client

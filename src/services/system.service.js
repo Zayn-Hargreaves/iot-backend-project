@@ -1,16 +1,17 @@
-const statsService = require("./stats.service");
-
-class systemService{
-    static turnOnOff = async()=>{
-        const relay = await Device.findOne({deviceCode:"RELAY_5V}"}).lean()
-        const relayData = await SensorData.findOne({device_id:relay._id}).lean()
-        const topic = "/sensors/RELAY_5V";
-        const message = {
-            deviceCode :"RELAY_5V",
-            value:Math.abs(1-relayData.value)
-        }
-        statsService.publishMessage(topic,message)
-        return await SensorData.findOneAndUpdate({_id:relayData._id},{value:Math.abs(1-relayData.value)})
+const SensorData = require("../models/sensorData.model");
+const topic = 'sensor/data';
+class systemService {
+    static turnOnOff = async (data, message) => {
+        data = Math.abs(1 - data);
+        const newData = `Relay: ${data}`
+        global.client.publish(topic, JSON.stringify(newData), function (err) {
+            if (err) {
+                console.error('Error publishing message:', err);
+            } else {
+                console.log(`Message published to topic: ${topic}`);
+            }
+        });
+        global._io.emit("switch system", { topic, message });
     }
 }
 

@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 router.use("/alert", require("./alerts"))
 router.use("/billing", require("./billings"))
-router.use("/devices", require("./devices"))
 router.use("/firebase", require("./firebase"))
 router.use("/data", require("./stats"))
 router.use("/system", require("./system"))

@@ -1,143 +1,66 @@
-const client = require("../config/config.hivemq");
+
 const { NotFoundError } = require("../core/error.response");
-const SensorData = require("../models/sensorData");
+const SensorData = require("../models/sensorData.model");
 const alertService = require("../services/alert.service");
-const Device = require("../models/device.model");
 const systemService = require("./system.service");
-const {server, io} = require("../socket.io")
+const sensorData = require("../models/sensorData.model")
+const checkThresholds = async (data) => {
+    if (data.tds > 1000) {
+        const message = `Cảm biến đo độ đục vượt ngưỡng! Giá trị: ${data.tds}`;
+        alertService.createAlert({
+            alert_type: "Cảnh báo độ đục vượt ngưỡng",
+            message: message,
+            device: "Cảm biến độ đục"
+        });
+        if (data.relay === 1) {
+            systemService.turnOnOff(data.relay, message);
+        }
+    } else if (data.temperature > 60) {
+        const message = `Nhiệt độ vượt ngưỡng! Giá trị: ${data.temperature}`
+        alertService.createAlert({
+            alert_type: "Cảnh báo nhiệt độ nước vượt ngưỡng",
+            message: message,
+            device: "Cảm biến nhiệt độ"
+        });
+        if (data.relay === 1) {
+            systemService.turnOnOff(data.relay,message);
+        }
+    } else if (data.flowRate > 2000) {
+        const message = `Lưu lượng nước vượt ngưỡng! Giá trị: ${data.flowRate}`
+        alertService.createAlert({
+            alert_type: "Cảnh báo lưu lượng nước vượt ngưỡng",
+            message: message,
+            device: "Cảm biến lưu lượng nước"
+        });
+        if (data.relay === 1) {
+            systemService.turnOnOff(data.relay,message);
+        }
+    }
+    const newData = new SensorData(data);
+    return await newData.save();
+};
 class statsService {
     // Subscribe tất cả các device theo deviceCode
-    static subscribeAllDevices = async () => {
-        const devices = await Device.find().lean();
-        for (const device of devices) {
-            const topic = `/sensor/${device.deviceCode}/data`;
-            this.subscribeTopic(topic);
-            this.listenForMessage(topic);
-        }
+    static handleSensorData = async(data) => {
+        const parsedData = JSON.parse(data);
+        checkThresholds(parsedData)
     };
 
-    static subscribeTopic = (topic) => {
-        client.subscribe(topic, function (err) {
-            if (!err) {
-                console.log(`Subscribed to topic: ${topic}`);
-            } else {
-                console.error('Error subscribing to topic:', err);
-            }
-        });
-    };
-
-    static publishMessage = (topic, message) => {
-        client.publish(topic, message, function (err) {
-            if (err) {
-                console.error('Error publishing message:', err);
-            } else {
-                console.log(`Message published to topic: ${topic}`);
-            }
-        });
-    };
-
-    // Lắng nghe tin nhắn từ topic của từng cảm biến
-    static listenForMessage = () => {
-        io.emit('sensorData', {
-            message:"Hello"
-            // deviceCode,
-            // value,
-            // unit,
-            // timestamp: new Date()
-        });
-        console.log("Message emitted to clients.");
-        // console.log("heoo")
-        // client.on('message', async (receivedTopic, message) => {
-        //     if (receivedTopic === topic) {
-        //         const parsedMessage = JSON.parse(message.toString());
-        //         const { deviceCode, value, unit } = parsedMessage;
-
-        //         // Lưu dữ liệu cảm biến vào MongoDB
-        //         const device = await Device.findOne({ deviceCode }).lean();
-        //         if (!device) {
-        //             throw new NotFoundError("Cant find device");
-        //         }
-
-        //         const sensorData = await SensorData.create({
-        //             device_id: device._id,
-        //             value,
-        //             unit
-        //         });
-                
-        //         // Lấy trạng thái relay
-        //         const relay = await Device.findOne({ deviceCode: "RELAY_5V" }).lean();
-        //         const relayData = await SensorData.findOne({ device_id: relay._id }).lean();
-
-        //         // Kiểm tra ngưỡng của từng cảm biến và tạo cảnh báo nếu cần
-        //         this.checkThresholds(deviceCode, value, device._id, relayData);
-                
-        //         console.log(`Data received from ${deviceCode}: ${value}`);
-        //     }
-        // });
-    };
-
-    static checkThresholds = async (deviceCode, value, deviceId, relayData) => {
-        // Điều kiện kiểm tra từng loại cảm biến
-        if (deviceCode === "ASAIR_AZDM01" && value > 1000) {
-            alertService.createAlert({
-                alert_type: "Cảnh báo độ đục vượt ngưỡng",
-                message: `Cảm biến đo độ đục vượt ngưỡng! Giá trị: ${value}`,
-                deviceId: deviceId
-            });
-            if (relayData.value === 0) {
-                systemService.turnOnOff();
-            }
-        } else if (deviceCode === "EC_SENSOR" && value > 500) {
-            alertService.createAlert({
-                alert_type: "Cảnh báo nồng độ kim loại vượt ngưỡng",
-                message: `Nồng độ kim loại vượt ngưỡng! Giá trị: ${value}`,
-                deviceId: deviceId
-            });
-            if (relayData.value === 0) {
-                systemService.turnOnOff();
-            }
-        } else if (deviceCode === "DS18B20" && value > 60) {
-            alertService.createAlert({
-                alert_type: "Cảnh báo nhiệt độ nước vượt ngưỡng",
-                message: `Nhiệt độ vượt ngưỡng! Giá trị: ${value}`,
-                deviceId: deviceId
-            });
-            if (relayData.value === 0) {
-                systemService.turnOnOff();
-            }
-        } else if (deviceCode === "YF-S201" && value > 2000) {
-            alertService.createAlert({
-                alert_type: "Cảnh báo lưu lượng nước vượt ngưỡng",
-                message: `Lưu lượng nước vượt ngưỡng! Giá trị: ${value}`,
-                deviceId: deviceId
-            });
-            if (relayData.value === 0) {
-                systemService.turnOnOff();
-            }
-        }
-    };
-
-    static getNewdata = async () => {
-        const devices = await Device.find().lean()
-        const sensorDataPromises = devices.map(async (device) => {
-            const latestData = await SensorData.findOne({ device_id: device._id })
-                .sort({ createdAt: -1 })
-                .lean();
-            
-            return {
-                deviceCode: device.deviceCode,
-                sensorType: device.sensorType,
-                latestData: latestData ? latestData.value : null,
-                unit: latestData ? latestData.unit : null
-            };
-        });
-        const sensorData = await Promise.all(sensorDataPromises);
-        const relayData = sensorData.find(data => data.deviceCode === "RELAY_5V");
-
+    static getAllData = async (req) => {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseFloat(req.query.limit)|| 20;
+        const skip = (page - 1) * limit;
+        const data = await SensorData.find({}).skip(skip).limit(limit).sort({createAt:-1})
+        const total = await SensorData.countDocuments();
         return {
-            sensorData: sensorData, // Dữ liệu của các cảm biến khác
-            relayStatus: relayData ? relayData.latestData : null // Trạng thái relay
-        };
+            data:data,
+            meta:{
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total/limit)
+            }
+        }
     };
 }
 
