@@ -7,11 +7,11 @@ const sensorData = require("../models/sensorData.model")
 const checkThresholds = async (data) => {
     if (data.tds > 1000) {
         const message = `Cảm biến đo độ đục vượt ngưỡng! Giá trị: ${data.tds}`;
-        alertService.createAlert({
-            alert_type: "Cảnh báo độ đục vượt ngưỡng",
-            message: message,
-            device: "Cảm biến độ đục"
-        });
+        // alertService.createAlert({
+        //     alert_type: "Cảnh báo độ đục vượt ngưỡng",
+        //     message: message,
+        //     device: "Cảm biến độ đục"
+        // });
         if (data.relay === 1) {
             systemService.turnOnOff(data.relay, message);
         }

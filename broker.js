@@ -21,11 +21,11 @@ const generateRandomData = () => {
 
 // Gửi dữ liệu cứ mỗi 10 giây
 client.on('connect', () => {
-    client.subscribe('sensor/data', (err) => {
+    client.subscribe('sensor/shutdown', (err) => {
         if (err) {
-            console.error('Lỗi khi subscribe vào topic sensor/data:', err);
+            console.error('Lỗi khi subscribe vào topic sensor/shutdown:', err);
         } else {
-            console.log('Đã subscribe vào topic sensor/data');
+            console.log('Đã subscribe vào topic sensor/shutdown');
         }
     });
 

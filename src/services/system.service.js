@@ -1,5 +1,5 @@
 const SensorData = require("../models/sensorData.model");
-const topic = 'sensor/data';
+const topic = 'sensor/shutdown';
 class systemService {
     static turnOnOff = async (data, message) => {
         data = Math.abs(1 - data);
