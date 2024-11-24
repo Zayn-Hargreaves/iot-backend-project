@@ -1,9 +1,8 @@
 const SensorData = require("../models/sensorData.model");
-const topic = 'sensor/shutdown';
+const topic = 'sensor/control';
 class systemService {
     static turnOnOff = async (data, message) => {
-        data = Math.abs(1 - data);
-        const newData = `Relay: ${data}`
+        const newData = `Relay mode: ${data}`
         global.client.publish(topic, JSON.stringify(newData), function (err) {
             if (err) {
                 console.error('Error publishing message:', err);

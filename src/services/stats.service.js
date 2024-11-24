@@ -7,14 +7,11 @@ const sensorData = require("../models/sensorData.model")
 const checkThresholds = async (data) => {
     if (data.tds > 1000) {
         const message = `Cảm biến đo độ đục vượt ngưỡng! Giá trị: ${data.tds}`;
-        // alertService.createAlert({
-        //     alert_type: "Cảnh báo độ đục vượt ngưỡng",
-        //     message: message,
-        //     device: "Cảm biến độ đục"
-        // });
-        if (data.relay === 1) {
-            systemService.turnOnOff(data.relay, message);
-        }
+        alertService.createAlert({
+            alert_type: "Cảnh báo độ đục vượt ngưỡng",
+            message: message,
+            device: "Cảm biến độ đục"
+        });
     } else if (data.temperature > 60) {
         const message = `Nhiệt độ vượt ngưỡng! Giá trị: ${data.temperature}`
         alertService.createAlert({
@@ -22,9 +19,7 @@ const checkThresholds = async (data) => {
             message: message,
             device: "Cảm biến nhiệt độ"
         });
-        if (data.relay === 1) {
-            systemService.turnOnOff(data.relay,message);
-        }
+        
     } else if (data.flowRate > 2000) {
         const message = `Lưu lượng nước vượt ngưỡng! Giá trị: ${data.flowRate}`
         alertService.createAlert({
@@ -32,9 +27,6 @@ const checkThresholds = async (data) => {
             message: message,
             device: "Cảm biến lưu lượng nước"
         });
-        if (data.relay === 1) {
-            systemService.turnOnOff(data.relay,message);
-        }
     }
     const newData = new SensorData(data);
     return await newData.save();

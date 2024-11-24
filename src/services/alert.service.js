@@ -10,6 +10,7 @@ class alertService{
             const registrationToken = token.registrationToken
             sendNotification(registrationToken, {alert_type, message});
         }
+        global._io.emit("switch system", message);
         return await Alert.create({deviceId, alert_type, message})
     }
     static getAllAlert = async()=>{
