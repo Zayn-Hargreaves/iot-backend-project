@@ -34,8 +34,12 @@ const checkThresholds = async (data) => {
 class statsService {
     // Subscribe tất cả các device theo deviceCode
     static handleSensorData = async(data) => {
+        if (typeof(data) === 'string') {
+            data = JSON.stringify(data)
+            return
+        }
         const parsedData = JSON.parse(data);
-        checkThresholds(parsedData)
+        checkThresholds(parsedData)     
     };
 
     static getAllData = async (req) => {
